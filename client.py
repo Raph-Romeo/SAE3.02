@@ -17,7 +17,7 @@ class MainWindow(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("My Client")
-        self.resize(500, 300)
+        self.resize(500,300)
         self.setWindowIcon(QIcon("icon.png"))
         self.__tabwidget = QTabWidget()
         self.__tabwidget.addTab(MainTab(self), "Servers")
@@ -26,15 +26,16 @@ class MainWindow(QDialog):
         self.setLayout(vbox)
     
     def NewTab(self, name:str, connection):
-        tab = ServerTab(connection)
+        tab = ServerTab(connection, self)
         self.__tabwidget.addTab(tab, name)
+        self.__tabwidget.setCurrentIndex(self.__tabwidget.count() - 1)
         return tab
 
 
     def __actionQuitter(self):
         return QCoreApplication.exit(0)
     
-    def alert(self, msg:str):
+    def alert(self, msg:str,ip,port,window):
         self.__alert = QMessageBox.critical(
             self,
             'Error.',
@@ -42,11 +43,18 @@ class MainWindow(QDialog):
             buttons=QMessageBox.Retry | QMessageBox.No,
             defaultButton=QMessageBox.Retry,
         )
-
         if self.__alert == QMessageBox.Retry:
-            print("Try again")
-        elif self.__alert == QMessageBox.No:
-            print("Cancel")
+            connect(ip,port,window)
+        else:
+            pass
+            
+    
+    def closeEvent(self, event):
+        global force_stopped_threads
+        for i in sockets:
+            force_stopped_threads.append(i)
+        event.accept()
+
 
 class MainTab(QMainWindow):
     def __init__(self, window):
@@ -56,50 +64,79 @@ class MainTab(QMainWindow):
         self.setCentralWidget(widget)
         grid = QGridLayout()
         widget.setLayout(grid)
+        self.__ipinput = QLineEdit()
+        self.__ipinput.setPlaceholderText('IP')
+        self.__portinput = QLineEdit()
+        self.__portinput.setPlaceholderText('PORT')
         self.__connectbutton = QPushButton('Connect')
         self.__connectbutton.clicked.connect(self.__connect_to_serv)
-        grid.addWidget(self.__connectbutton,0,0)
+        grid.addWidget(self.__connectbutton,1,0,1,2)
+        grid.addWidget(self.__ipinput,0,0)
+        grid.addWidget(self.__portinput,0,1)
+    
     
     def __connect_to_serv(self):
-        ip = '127.0.0.1'
-        port = 5500
+        ip = self.__ipinput.text()
+        port = int(self.__portinput.text())
         connect(ip,port,self.__parent)
 
 
 class ServerTab(QMainWindow):
-    def __init__(self, connection):
+    def __init__(self, connection, parent):
         super().__init__()
         widget = QWidget()
         self.setCentralWidget(widget)
         grid = QGridLayout()
         self.__connection = connection
+        self.setStyleSheet('background-color:#19002c;color:white;')
         widget.setLayout(grid)
+        self.__parent = parent
         self.__cmdinput = QLineEdit('')
         self.__cmdinput.setPlaceholderText('Type command...')
+        self.__cmdinput.setStyleSheet('padding:5px;border:none;')
         self.__cmdlabel = QLabel('Server > Connection with server was successful!\n')
         self.__cmdlabel.setWordWrap(True)
-        self.__cmdbutton = QPushButton('Send')
+        self.__cmdbutton = QPushButton('SEND')
         self.__cmdbutton.setFixedWidth(50)
+        self.__cmdbutton.setStyleSheet('background-color:white;padding:5px;border-radius:10px;color:#19002c;font-weight:400;font-family:arial;text-align:center;')
         self.__cmdbutton.clicked.connect(self.__send_message)
-        self.__cmdlabel.setStyleSheet("background-color:black;color:white;padding:5px;font-family:arial;font-size:12px;")
+        self.__cmdlabel.setStyleSheet("color:white;padding:5px;font-family:arial;font-size:12px;")
         self.__cmdlabel.setAlignment(Qt.Qt.AlignTop)
+        self.__messagebox = QMessageBox()
         grid.addWidget(self.__cmdlabel,0,0,1,2)
         grid.addWidget(self.__cmdinput,1,0)
         grid.addWidget(self.__cmdbutton,1,1)
-        
+    
+    
     def __send_message(self):
         command = self.__cmdinput.text()
         if len(command) > 0:
-            if command == 'clear':
+            if command.lower() == 'clear' or command.lower() == 'cls':
                 self.__cmdinput.setText('')
                 self.__cmdlabel.setText('')
             else:
-                self.__cmdinput.setText('')
-                self.__cmdlabel.setText(self.__cmdlabel.text() + 'You > ' + command + '\n')
-                self.__connection.send(('$' + command).encode())
+                try:
+                    self.__cmdinput.setText('')
+                    self.__cmdlabel.setText(self.__cmdlabel.text() + 'You > ' + command + '\n')
+                    self.__connection.send(('$' + command).encode())
+                except:
+                    self.__cmdlabel.setText(self.__cmdlabel.text() + 'Conection was lost. \n')
+    
     
     def response(self, data):
         self.__cmdlabel.setText(self.__cmdlabel.text() + 'Server > ' + data + '\n')
+    
+    
+    def __info_box(self, message):
+        self.__messagebox.setIcon(QMessageBox.Information)
+        self.__messagebox.setWindowTitle('Info')
+        self.__messagebox.resize(500, 500)
+        self.__messagebox.exec()
+    
+    
+    def closeTab(self):
+        #self.__info_box('Connection was closed.')
+        self.deleteLater()
 
 
 #________
@@ -110,8 +147,11 @@ def disconnect(id:str):
 
 
 def listen(client, this_id:str):
+    global force_stopped_threads
     while True:
         if this_id in force_stopped_threads:
+            client[1].closeTab()
+            client[0].close()
             sys.exit()
         try:
             data = client[0].recv(1024)
@@ -119,19 +159,21 @@ def listen(client, this_id:str):
                 pass
             else:
                 clean = data.decode()
-                print(data)
                 client[1].response(clean)
+                if clean == 'closing socket':
+                    force_stopped_threads.append(this_id)
         except:
-            client[1].response('disconnected')
-            client[0].close()
-            sys.exit()
+            #client[1].closeTab()
+            #client[0].close()
+            pass
 
 
 def connect(ip: str ,port: int, window):
     global sockets
     try:
         client_socket = socket.socket()
-        client_socket.connect((ip,port)) # ERROR IS HERE. WE CANT CONNECT TO SERVER??
+        client_socket.connect((ip,port))
+        client_socket.setblocking(0)
         if len(list(sockets)) > 0:
             id = str(int(list(sockets)[len(list(sockets)) - 1]) + 1)
         else:
@@ -141,7 +183,7 @@ def connect(ip: str ,port: int, window):
         t1.start()
         sockets[id] = [client_socket, tab]
     except:
-        window.alert('Error while trying to connect to server! \nWould you like to try again? ')
+        window.alert('Error while trying to connect to server! \nWould you like to try again? ',ip,port,window)
 
 
 def main():
