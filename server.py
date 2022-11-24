@@ -26,34 +26,37 @@ def connect():
         server_socket = socket.socket()
         server_socket.bind(('127.0.0.1',port))
         server_socket.listen(5)
-        #server_socket.setblocking(0)
+        server_socket.setblocking(0)
         print('Started server')
         write_to_logs('Started server')
         return server_socket
     except:
-        print('There was an error starting the server.')
+        print('There was an error starting the server. PORT already in use!')
         return sys.exit()
 
 
 def listen(connection):
+    global force_stop
     while True:
         if not force_stop:
             try:
                 data = connection.recv(1024)
                 if data is not None:
                     cleaned = data.decode()
-                    print(cleaned)
                     if len(cleaned) > 0:
                         if cleaned[0] == '$':
                             command_thread = threading.Thread(target=cmd_run,args=[connection,cleaned.split('$',1)[1]])
                             command_thread.start()
+                            if cleaned == '$kill':
+                                force_stop = True
                         write_to_logs(cleaned)
             except:
-                print('connection with client was lost')
-                connection.close()
-                sys.exit()
+                #print('connection with client was lost')
+                #connection.close()
+                #sys.exit()
+                pass
         else:
-            sys.exit()
+            break
 
 
 def accept(server_socket):
@@ -66,9 +69,10 @@ def accept(server_socket):
                 t = threading.Thread(target=listen,args=[conn])
                 t.start()
             except:
-                print('wtf')
+                pass
         else:
             print('closed')
+            server_socket.close()
             sys.exit()
 
 
@@ -77,6 +81,7 @@ def main():
     t1 = threading.Thread(target=accept,args=[server_socket])
     t1.start()
     t1.join()
+    sys.exit()
 
 
 if __name__ == '__main__':
