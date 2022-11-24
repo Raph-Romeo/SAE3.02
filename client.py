@@ -3,7 +3,7 @@ import sys
 import os
 import threading
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtWidgets import QWidget, QMainWindow, QGridLayout, QLabel, QLineEdit, QPushButton, QComboBox, QMenu, QDialog, QTabWidget, QVBoxLayout, QMessageBox, QDialogButtonBox
+from PyQt5.QtWidgets import QWidget, QMainWindow, QGridLayout, QLabel, QLineEdit, QPushButton, QComboBox, QMenu, QDialog, QTabWidget, QVBoxLayout, QMessageBox, QDialogButtonBox, QTableWidget, QScrollArea
 from PyQt5.QtGui import QIcon
 from PyQt5 import Qt
 from PyQt5.QtCore import QCoreApplication
@@ -11,6 +11,98 @@ from PyQt5 import QtCore
 
 
 #________
+
+class ScrollLabel(QScrollArea):
+ 
+    def __init__(self, *args, **kwargs):
+        QScrollArea.__init__(self, *args, **kwargs)
+        self.setWidgetResizable(True)
+        content = QWidget(self)
+        self.setWidget(content)
+        layout = QVBoxLayout(content)
+        self.label = QLabel(content)
+        self.label.setStyleSheet("color:white;font-family:verdana;font-size:12px;border-bottom:none;")
+        self.setStyleSheet('QScrollArea{border:none;border-bottom:1px solid #dadce0;}')
+        self.verticalScrollBar().setStyleSheet(stylesheet)
+        self.label.setWordWrap(True)
+        self.label.setAlignment(Qt.Qt.AlignTop)
+        layout.addWidget(self.label)
+ 
+    def setText(self, text):
+        self.label.setText(text)
+ 
+    def text(self):
+        get_text = self.label.text()
+        return get_text
+
+stylesheet = """
+    QScrollBar:vertical
+    {
+        background-color: #2A2929;
+        width: 15px;
+        margin: 15px 3px 15px 3px;
+        border: 1px transparent #2A2929;
+        border-radius: 4px;
+    }
+
+    QScrollBar::handle:vertical
+    {
+        background-color: #dadce0;
+        min-height: 5px;
+        border-radius: 4px;
+    }
+
+    QScrollBar::sub-line:vertical
+    {
+        margin: 3px 0px 3px 0px;
+        height: 0px;
+        width: 0px;
+        subcontrol-position: top;
+        subcontrol-origin: margin;
+    }
+
+    QScrollBar::add-line:vertical
+    {
+        margin: 3px 0px 3px 0px;
+        height: 0px;
+        width: 0px;
+        subcontrol-position: bottom;
+        subcontrol-origin: margin;
+    }
+
+    QScrollBar::sub-line:vertical:hover,QScrollBar::sub-line:vertical:on
+    {
+        height: 0px;
+        width: 0px;
+        subcontrol-position: top;
+        subcontrol-origin: margin;
+    }
+
+    QScrollBar::add-line:vertical:hover, QScrollBar::add-line:vertical:on
+    {
+        height: 0px;
+        width: 0px;
+        subcontrol-position: bottom;
+        subcontrol-origin: margin;
+    }
+
+    QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical
+    {
+        background: none;
+        opacity: 0%;
+        height: 0px;
+        width:0px;
+    }
+
+    QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical
+    {
+        background: none;
+        opacity: 0%;
+        height: 0px;
+        width:0px;
+    }
+"""
+
 
 
 class MainWindow(QDialog):
@@ -70,9 +162,21 @@ class MainTab(QMainWindow):
         self.__portinput.setPlaceholderText('PORT')
         self.__connectbutton = QPushButton('Connect')
         self.__connectbutton.clicked.connect(self.__connect_to_serv)
-        grid.addWidget(self.__connectbutton,1,0,1,2)
-        grid.addWidget(self.__ipinput,0,0)
-        grid.addWidget(self.__portinput,0,1)
+        #self.__table = self.__iplist()
+        
+        #grid.addWidget(self.__table,0,0,1,2)
+        grid.addWidget(self.__ipinput,1,0)
+        grid.addWidget(self.__portinput,1,1)
+        grid.addWidget(self.__connectbutton,2,0,1,2)
+        
+        
+    def __iplist(self):
+        tableWidget = QTableWidget();
+        with open('servers.txt','r') as file:
+            for line in file.readlines():
+                line.replace('\n','')
+                tableWidget.insertRow(tableWidget.rowCount())
+        return tableWidget        
     
     
     def __connect_to_serv(self):
@@ -94,14 +198,13 @@ class ServerTab(QMainWindow):
         self.__cmdinput = QLineEdit('')
         self.__cmdinput.setPlaceholderText('Type command...')
         self.__cmdinput.setStyleSheet('padding:5px;border:none;')
-        self.__cmdlabel = QLabel('Server > Connection with server was successful!\n')
-        self.__cmdlabel.setWordWrap(True)
+        self.__cmdinput.editingFinished.connect(self.__send_message)
         self.__cmdbutton = QPushButton('SEND')
         self.__cmdbutton.setFixedWidth(50)
+        self.__cmdlabel = ScrollLabel()
+        self.__cmdlabel.setText('Established connection with ' + str(connection.getsockname()[0]) + ':' + str(connection.getsockname()[1]) + '\n')
         self.__cmdbutton.setStyleSheet('background-color:white;padding:5px;border-radius:10px;color:#19002c;font-weight:400;font-family:arial;text-align:center;')
         self.__cmdbutton.clicked.connect(self.__send_message)
-        self.__cmdlabel.setStyleSheet("color:white;padding:5px;font-family:arial;font-size:12px;")
-        self.__cmdlabel.setAlignment(Qt.Qt.AlignTop)
         self.__messagebox = QMessageBox()
         grid.addWidget(self.__cmdlabel,0,0,1,2)
         grid.addWidget(self.__cmdinput,1,0)
@@ -124,7 +227,8 @@ class ServerTab(QMainWindow):
     
     
     def response(self, data):
-        self.__cmdlabel.setText(self.__cmdlabel.text() + 'Server > ' + data + '\n')
+        self.__cmdlabel.setText(self.__cmdlabel.text() + data + '\n')
+        self.__cmdlabel.verticalScrollBar().setValue(self.__cmdlabel.verticalScrollBar().maximum())
     
     
     def __info_box(self, message):
