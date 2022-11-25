@@ -13,7 +13,7 @@ def windows_command(cmd_in: str) -> str:
         else:
             args = None
         if cmd == 'os':
-            return 'Operating System: Windows 10\nMachine name: ' + gethostname()
+            return 'Operating System: Windows 10'
         elif cmd == 'ip':
             if args is None:
                 return str(subprocess.check_output('ipconfig', shell=True)).replace('\\r\\n','\n').split("'",1)[1].split("'",1)[0]
@@ -21,8 +21,25 @@ def windows_command(cmd_in: str) -> str:
                 return str(subprocess.check_output('ipconfig /all', shell=True)).replace('\\r\\n','\n').split("'",1)[1].split("'",1)[0]
             else:
                 return str('unrecognized argument : ' + cmd_in.split(' ', 1)[1])
+        elif cmd == 'name':
+            return 'Machine name: ' + gethostname()
         elif cmd == 'ram':
-            return os.system('')
+            stdout = str(subprocess.check_output("wmic computersystem get totalphysicalmemory", shell=True)).replace('\\r\\n','').replace('\\r','')
+            memory = stdout.split(' ')[2]
+            if len(memory) >= 9:
+                memory = str(round(int(memory)/1000000000,2)) + 'GB'
+            elif len(memory) >= 6:
+                memory = str(round(int(memory)/1000000,2)) + 'MB'
+            else:
+                memory = str(round(int(memory)/1000,2)) + 'KB'
+            available = str(subprocess.check_output('systeminfo |find "Available Physical Memory"', shell=True)).replace(',',' ')
+            return 'Total memory: ' + memory + '\n' + available.replace("b'", "").replace("\\r\\n'", "")
+        elif cmd == 'cpu':
+            powershell = "Powershell \"Get-Counter '\Processor(*)\% Processor Time' | Select -Expand Countersamples | Select InstanceName, CookedValue\""
+            stdout = str(subprocess.check_output(powershell, shell=True)).replace('\\r\\n','').replace("'"," ")
+            percent = str(round(float(stdout.split(' ')[len(stdout.split(' ')) - 2]),2))
+            stdout = f"CPU USAGE: {percent}%"
+            return stdout
         elif cmd == 'disconnect' or cmd == 'exit' or cmd == 'quit' or cmd == 'leave':
             return 'closing socket'
         elif cmd == 'kill':
@@ -52,12 +69,17 @@ def windows_command(cmd_in: str) -> str:
                     string += line
             return string
         elif cmd == 'help':
-            return 'List of commands:\nOS - displays operating system details\nIP - displays all ip information of the machine\nRAM - displays total memory available on the machine\nDISCONNECT -closes client connection\nKILL -closes server socket'
+            commands = ['disconnect,leave,quit,exit','reset','kill','os','cpu','ip (-a for more details)','name','RAM','CPU','IP','ping <destination>','DOS:<system command>','powershell:<powershell command>']
+            string = ''
+            for i in commands:
+                string += i + '\n'
+            return 'List of commands:\n' + string
         elif cmd == 'ping':
             ip = args
             return str(subprocess.check_output('ping ' + ip, shell=True)).replace('\\r\\n','\n').split("'",1)[1].split("'",1)[0]
-        elif cmd == 'echo':
-            return cmd_in.split(' ',1)[1]
+        elif cmd[0:4] == 'dos:':
+            command = cmd_in.split(':',1)[1]
+            return str(subprocess.check_output(command, shell=True)).replace('\\r\\n','\n').split("'",1)[1].split("'",1)[0]
         else:
             return 'Command not found. Type help for a list of available commands'
     except:
