@@ -1,4 +1,5 @@
 import sys
+import os
 import socket
 from cmd import cmd_run
 import threading
@@ -13,10 +14,9 @@ def write_to_logs(info:str) -> None:
         return
 
 
-def disconnect(server_socket):
+def disconnect():
     global force_stop
     force_stop = True
-    server_socket.close()
     write_to_logs('Closed server')
     print('Closed server')
 
@@ -36,7 +36,7 @@ def connect():
 
 
 def listen(connection,auth):
-    global force_stop    
+    global force_stop
     while True:
         if not force_stop:
             try:
@@ -63,12 +63,15 @@ def listen(connection,auth):
                                 command_thread = threading.Thread(target=cmd_run,args=[connection,cleaned.split('$',1)[1]])
                                 command_thread.start()
                                 if cleaned == '$kill':
-                                    force_stop = True
+                                    disconnect()
+                                elif cleaned == '$reset':
+                                    disconnect()
+                                    if authentication:
+                                        os.system('python ' + sys.argv[0] + ' ' + str(port) + ' -p ' + password)
+                                    else:
+                                        os.system('python ' + sys.argv[0] + ' ' + str(port))
                     write_to_logs(cleaned)
             except:
-                #print('connection with client was lost')
-                #connection.close()
-                #sys.exit()
                 pass
         else:
             break
@@ -92,7 +95,6 @@ def accept(server_socket):
             except:
                 pass
         else:
-            print('closed')
             server_socket.close()
             sys.exit()
 
