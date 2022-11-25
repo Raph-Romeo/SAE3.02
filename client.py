@@ -164,6 +164,7 @@ class ServerTab(QMainWindow):
         self.setStyleSheet('background-color:#19002c;color:white;')
         widget.setLayout(grid)
         self.__parent = parent
+        self.__auth = False
         self.__cmdinput = QLineEdit('')
         self.__cmdinput.setPlaceholderText('Type command...')
         self.__cmdinput.setStyleSheet('padding:5px;border:none;')
@@ -171,7 +172,6 @@ class ServerTab(QMainWindow):
         self.__cmdbutton = QPushButton('SEND')
         self.__cmdbutton.setFixedWidth(50)
         self.__cmdlabel = ScrollLabel()
-        self.__cmdlabel.setText('Established connection with ' + str(connection.getsockname()[0]) + ':' + str(connection.getsockname()[1]) + '\n')
         self.__cmdbutton.setStyleSheet('background-color:white;padding:5px;border-radius:10px;color:#19002c;font-weight:400;font-family:arial;text-align:center;')
         self.__cmdbutton.clicked.connect(self.__send_message)
         self.__messagebox = QMessageBox()
@@ -180,17 +180,25 @@ class ServerTab(QMainWindow):
         grid.addWidget(self.__cmdbutton,1,1)
     
     
+    def authentified(self):
+        self.__auth = True
+        self.__cmdlabel.setText('Established connection with ' + str(self.__connection.getsockname()[0]) + ':' + str(self.__connection.getsockname()[1]) + '\n')
+    
+    
     def __send_message(self):
         command = self.__cmdinput.text()
         if len(command) > 0:
-            if command.lower() == 'clear' or command.lower() == 'cls':
+            if self.__auth and (command.lower() == 'clear' or command.lower() == 'cls'):
                 self.__cmdinput.setText('')
                 self.__cmdlabel.setText('')
             else:
                 try:
                     self.__cmdinput.setText('')
-                    self.__cmdlabel.setText(self.__cmdlabel.text() + 'You > ' + command + '\n')
-                    self.__connection.send(('$' + command).encode())
+                    if self.__auth:
+                        self.__cmdlabel.setText(self.__cmdlabel.text() + 'You > ' + command + '\n')
+                        self.__connection.send(('$' + command).encode())
+                    else:
+                        self.__connection.send(command.encode())
                 except:
                     self.__cmdlabel.setText(self.__cmdlabel.text() + 'Conection was lost. \n')
     
@@ -221,6 +229,7 @@ def disconnect(id:str):
 
 def listen(client, this_id:str):
     global force_stopped_threads
+    auth = False
     while True:
         if this_id in force_stopped_threads:
             client[1].closeTab()
@@ -231,9 +240,12 @@ def listen(client, this_id:str):
             if not data:
                 pass
             else:
-                clean = data.decode()
-                client[1].response(clean)
-                if clean == 'closing socket':
+                cleaned = data.decode()
+                client[1].response(cleaned)
+                if not auth and cleaned == 'OK':
+                    auth = True
+                    client[1].authentified()
+                if cleaned == 'closing socket':
                     force_stopped_threads.append(this_id)
         except:
             #client[1].closeTab()
@@ -256,7 +268,7 @@ def connect(ip: str ,port: int, window):
         t1.start()
         sockets[id] = [client_socket, tab]
     except:
-        window.alert('Error while trying to connect to server! \nWould you like to try again? ',ip,port,window)
+        window.alert('Error while trying to connect to server!\nWould you like to try again? ',ip,port,window)
 
 
 def main():
