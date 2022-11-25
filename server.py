@@ -35,21 +35,36 @@ def connect():
         return sys.exit()
 
 
-def listen(connection):
-    global force_stop
+def listen(connection,auth):
+    global force_stop    
     while True:
         if not force_stop:
             try:
                 data = connection.recv(1024)
                 if data is not None:
                     cleaned = data.decode()
-                    if len(cleaned) > 0:
-                        if cleaned[0] == '$':
-                            command_thread = threading.Thread(target=cmd_run,args=[connection,cleaned.split('$',1)[1]])
-                            command_thread.start()
-                            if cleaned == '$kill':
-                                force_stop = True
-                        write_to_logs(cleaned)
+                    if not auth:
+                        if cleaned == password:
+                            auth = True
+                            msg = 'OK'
+                            connection.send(msg.encode())
+                        else:
+                            if cleaned == 'disconnect' or cleaned == 'exit' or cleaned == 'leave' or cleaned == 'exit':
+                                msg = 'closing socket'
+                                connection.send(msg.encode())
+                                connection.close()
+                                break
+                            else:
+                                msg = 'incorrect password'
+                                connection.send(msg.encode())
+                    else:
+                        if len(cleaned) > 0:
+                            if cleaned[0] == '$':
+                                command_thread = threading.Thread(target=cmd_run,args=[connection,cleaned.split('$',1)[1]])
+                                command_thread.start()
+                                if cleaned == '$kill':
+                                    force_stop = True
+                    write_to_logs(cleaned)
             except:
                 #print('connection with client was lost')
                 #connection.close()
@@ -65,8 +80,14 @@ def accept(server_socket):
         if not force_stop:
             try:
                 conn, addr = server_socket.accept()
+                if authentication:
+                    isAuthenticated = False
+                    conn.send('Enter password:'.encode())
+                else:
+                    isAuthenticated = True
+                    conn.send('OK'.encode())
                 write_to_logs('New connection from IP : ' + str(addr))
-                t = threading.Thread(target=listen,args=[conn])
+                t = threading.Thread(target=listen,args=[conn,isAuthenticated])
                 t.start()
             except:
                 pass
@@ -85,14 +106,21 @@ def main():
 
 
 if __name__ == '__main__':
-    if len(sys.argv) == 2:
+    if len(sys.argv) > 1:
         try:
             port = int(sys.argv[1])
         except:
             print('Invalid port!')
             sys.exit()
+        if len(sys.argv) == 4:
+            if sys.argv[2] == '-p':
+                authentication = True
+                password = sys.argv[3]
+        else:
+            authentication = False
+            password = None
     else:
-        print('Usage: python ' + sys.argv[0] + ' <port number>')
+        print('Usage: python ' + sys.argv[0] + ' <port number>\nFor authenticated connection use: -p <password>')
         sys.exit()
     force_stop = False
     main()
