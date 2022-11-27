@@ -24,7 +24,7 @@ def disconnect():
 def connect():
     try:
         server_socket = socket.socket()
-        server_socket.bind(('127.0.0.1',port))
+        server_socket.bind(('0.0.0.0',port))
         server_socket.listen(5)
         server_socket.setblocking(0)
         print('Started server')
@@ -70,7 +70,7 @@ def listen(connection,auth):
                                         os.system('python ' + sys.argv[0] + ' ' + str(port) + ' -p ' + password)
                                     else:
                                         os.system('python ' + sys.argv[0] + ' ' + str(port))
-                    write_to_logs(cleaned)
+                            write_to_logs(cleaned)
             except:
                 pass
         else:
@@ -89,7 +89,7 @@ def accept(server_socket):
                 else:
                     isAuthenticated = True
                     conn.send('OK'.encode())
-                write_to_logs('New connection from IP : ' + str(addr))
+                write_to_logs('New connection from IP : ' + str(addr[0]))
                 t = threading.Thread(target=listen,args=[conn,isAuthenticated])
                 t.start()
             except:
