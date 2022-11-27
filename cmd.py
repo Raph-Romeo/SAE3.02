@@ -13,7 +13,7 @@ def windows_command(cmd_in: str) -> str:
         else:
             args = None
         if cmd == 'os':
-            return 'Operating System: Windows 10'
+            return str(subprocess.check_output('wmic os get Caption,CSDVersion /value | findstr /B /C:"Caption="', shell=True)).split("=")[1].replace('\\r\\n','').replace("\\r'","")
         elif cmd == 'ip':
             if args is None:
                 return str(subprocess.check_output('ipconfig', shell=True)).replace('\\r\\n','\n').split("'",1)[1].split("'",1)[0]
@@ -24,7 +24,7 @@ def windows_command(cmd_in: str) -> str:
             else:
                 return str('unrecognized argument : ' + cmd_in.split(' ', 1)[1])
         elif cmd == 'name':
-            return 'Machine name: ' + gethostname()
+            return gethostname()
         elif cmd == 'ram':
             stdout = str(subprocess.check_output("wmic computersystem get totalphysicalmemory", shell=True)).replace('\\r\\n','').replace('\\r','')
             memory = stdout.split(' ')[2]
