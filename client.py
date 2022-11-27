@@ -4,7 +4,7 @@ import os
 import threading
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QWidget, QMainWindow, QGridLayout, QLabel, QLineEdit, QPushButton, QComboBox, QMenu, QDialog, QTabWidget, QVBoxLayout, QMessageBox, QDialogButtonBox, QTableWidget, QTableView, QScrollArea, QTableWidgetItem, QAbstractItemView, QHeaderView
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QCursor
 from PyQt5 import Qt
 from PyQt5.QtCore import QCoreApplication
 from PyQt5 import QtCore
@@ -22,21 +22,22 @@ class ScrollLabel(QScrollArea):
         layout = QVBoxLayout(content)
         self.label = QLabel(content)
         self.label.setStyleSheet("color:white;font-family:verdana;font-size:12px;border-bottom:none;")
-        self.setStyleSheet('QScrollArea{border:none;border-bottom:1px solid #dadce0;}')
-        self.verticalScrollBar().setStyleSheet(stylesheet)
-        self.horizontalScrollBar().setStyleSheet(stylesheet)
+        self.setStyleSheet(stylesheet)
         self.label.setWordWrap(True)
         self.label.setAlignment(Qt.Qt.AlignTop)
+        #self.label.setTextInteractionFlags()
         layout.addWidget(self.label)
- 
+
     def setText(self, text):
         self.label.setText(text)
- 
+
     def text(self):
         get_text = self.label.text()
         return get_text
 
 stylesheet = """
+    QScrollArea{border:none;border-bottom:1px solid #dadce0;}
+    
     QScrollBar:vertical{background-color: #2A2949;width: 15px;margin: 15px 3px 15px 3px;border: 1px transparent #2A2929;border-radius: 4px;}
     QScrollBar::handle:vertical{background-color: #dadce0;min-height: 5px;border-radius: 4px;}
     QScrollBar::sub-line:vertical{margin: 3px 0px 3px 0px;height: 0px;width: 0px;subcontrol-position: top;subcontrol-origin: margin;}
@@ -65,22 +66,28 @@ class MainWindow(QDialog):
         self.resize(720,500)
         self.setWindowIcon(QIcon("icon.png"))
         self.__tabwidget = QTabWidget()
+        self.__tabwidget.setStyleSheet('border:none;margin:0;padding:0;')
         self.__tabwidget.addTab(MainTab(self), "Servers")
         vbox = QVBoxLayout()
+        vbox.setContentsMargins(0, 0, 0, 0)
         vbox.addWidget(self.__tabwidget)
         self.setLayout(vbox)
     
     def NewTab(self, name:str, connection):
-        tab = ServerTab(connection, self)
+        tab = ServerTab(connection, self, name)
         self.__tabwidget.addTab(tab, name)
         self.__tabwidget.setCurrentIndex(self.__tabwidget.count() - 1)
         return tab
     
+    
+    def renameTab(self, name:str):
+        self.__tabwidget.setTabText(self.__tabwidget.currentIndex(),name)
 
 
     def __actionQuitter(self):
         return QCoreApplication.exit(0)
-    
+
+
     def alert(self, msg:str,ip,port,window):
         self.__alert = QMessageBox.critical(
             self,
@@ -93,8 +100,8 @@ class MainWindow(QDialog):
             connect(ip,port,window)
         else:
             pass
-            
-    
+
+
     def closeEvent(self, event):
         global force_stopped_threads
         for i in sockets:
@@ -108,20 +115,25 @@ class MainTab(QMainWindow):
         widget = QWidget()
         self.__parent = window
         self.setCentralWidget(widget)
-        grid = QGridLayout()
-        widget.setLayout(grid)
+        self.__grid = QGridLayout()
+        self.__grid.setContentsMargins(0, 0, 0, 0)
+        widget.setLayout(self.__grid)
+        self.__nameinput = QLineEdit()
+        self.__nameinput.setPlaceholderText('Server name')
         self.__ipinput = QLineEdit()
         self.__ipinput.setPlaceholderText('IP')
         self.__portinput = QLineEdit()
         self.__portinput.setPlaceholderText('PORT')
-        self.__connectbutton = QPushButton('Connect')
-        self.__connectbutton.clicked.connect(self.__connect_to_serv)
+        self.__addbutton = QPushButton('+')
+        self.__addbutton.clicked.connect(self.__connect_to_serv)
         self.__table = self.__ip_list()
+        self.setStyleSheet("") # GONNA CHANGE IT AFTER -----------------------------------____________________-----------------====================
         
-        grid.addWidget(self.__table,0,0,1,2)
-        grid.addWidget(self.__ipinput,1,0)
-        grid.addWidget(self.__portinput,1,1)
-        grid.addWidget(self.__connectbutton,2,0,1,2)
+        self.__grid.addWidget(self.__table,0,0,1,4)
+        self.__grid.addWidget(self.__nameinput,1,0)
+        self.__grid.addWidget(self.__ipinput,1,1)
+        self.__grid.addWidget(self.__portinput,1,2)
+        self.__grid.addWidget(self.__addbutton,1,3)
     
     
     def __ip_list(self):
@@ -137,52 +149,88 @@ class MainTab(QMainWindow):
         tableWidget.horizontalHeader().setStretchLastSection(True)
         tableWidget.verticalHeader().setVisible(False)
         tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
+        tableWidget.doubleClicked.connect(self.__tableitemselect)
         tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
         tableWidget.setHorizontalHeaderLabels(['Server name','Server address'])
         return tableWidget
-
     
-    def __connect_to_serv(self):
-        if len(self.__ipinput.text()) > 0 and len(self.__portinput.text()) > 0:
-            ip = self.__ipinput.text()
-            try:
-                port = int(self.__portinput.text())
-            except:
-                return print('not a number')
-            connect(ip,port,self.__parent)
+    
+    def __display_message(self, message:str):
+        self.__display_message_label = QLabel(message)
+        self.__display_message_label.setStyleSheet('background:rgba(34,34,34,0.5);font-size:20px;font-family:verdana;color:white;')
+        self.__display_message_label.setAlignment(Qt.Qt.AlignCenter)
+        self.__grid.addWidget(self.__display_message_label,0,0,2,4)
+    
+    
+    def __tableitemselect(self,item):
+        ip = self.__table.item(item.row(),1).text().split(':')[0]
+        port = self.__table.item(item.row(),1).text().split(':')[1]
+        try:
+            port = int(port)
+        except:
+            print('not a number!')
+        name = self.__table.item(item.row(),0).text()
+        self.__connect_to_serv(ip,port,name)
+
+
+    def __connect_to_serv(self,ip=None,port=None,tabname=None):
+        if tabname is None:
+            if len(self.__ipinput.text()) > 0 and len(self.__portinput.text()) > 0:
+                ip = self.__ipinput.text()
+                try:
+                    port = int(self.__portinput.text())
+                except:
+                    return print('not a number')
+                    self.__parent.info_box('hi')
+                connect(ip,port,self.__parent)
+            else:
+                print('please fill all fields!')
         else:
-            print('please fill all fields!')
+            self.__display_message('Attempting to connect to ' + str(ip) + ':' + str(port) + '...')
+            connect(ip, port, self.__parent, tabname)
 
 
 class ServerTab(QMainWindow):
-    def __init__(self, connection, parent):
+    def __init__(self, connection, parent, servername):
         super().__init__()
         widget = QWidget()
         self.setCentralWidget(widget)
         grid = QGridLayout()
+        grid.setContentsMargins(0, 0, 0, 0)
         self.__connection = connection
-        self.setStyleSheet('background-color:#19002c;color:white;')
+        self.setStyleSheet('background-color:#19002c;color:white;padding:0;margin:0')
         widget.setLayout(grid)
         self.__parent = parent
         self.__auth = False
+        self.__servername = servername
         self.__cmdinput = QLineEdit('')
-        self.__cmdinput.setPlaceholderText('Type command...')
-        self.__cmdinput.setStyleSheet('padding:5px;border:none;')
+        self.__cmdinput.setPlaceholderText('Type password . . .')
+        self.__cmdinput.setStyleSheet('border:none;margin:5px;')
         self.__cmdinput.editingFinished.connect(self.__send_message)
+        self.__cmdinput.setEchoMode(QLineEdit.Password)
         self.__cmdbutton = QPushButton('SEND')
         self.__cmdbutton.setFixedWidth(50)
+        titlelabel = QLabel('Connection: ' + str(self.__connection.getpeername()[0]) + ':' + str(self.__connection.getpeername()[1]))
+        titlelabel.setStyleSheet('color:white;margin-left:5px;font-size:12px;font-family:verdana;')
+        self.__exitbutton = QPushButton('𐌢')
+        self.__exitbutton.setStyleSheet('QPushButton{background-color:transparent;padding:5px;border-radius:0px;color:#FFF;font-weight:100;font-family:arial;text-align:center;}QPushButton:hover{background-color:#F02020;}')
+        self.__exitbutton.clicked.connect(self.__exit)
+        self.__exitbutton.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
         self.__cmdlabel = ScrollLabel()
-        self.__cmdbutton.setStyleSheet('background-color:white;padding:5px;border-radius:10px;color:#19002c;font-weight:400;font-family:arial;text-align:center;')
+        self.__cmdbutton.setStyleSheet('background-color:white;padding:5px;margin:5px;border-radius:10px;color:#19002c;font-weight:400;font-family:arial;text-align:center;')
         self.__cmdbutton.clicked.connect(self.__send_message)
-        self.__messagebox = QMessageBox()
-        grid.addWidget(self.__cmdlabel,0,0,1,2)
-        grid.addWidget(self.__cmdinput,1,0)
-        grid.addWidget(self.__cmdbutton,1,1)
+        grid.addWidget(titlelabel,0,0,1,2)
+        grid.addWidget(self.__exitbutton,0,1)
+        grid.addWidget(self.__cmdlabel,1,0,1,2)
+        grid.addWidget(self.__cmdinput,2,0)
+        grid.addWidget(self.__cmdbutton,2,1)
     
     
-    def authentified(self):
+    def authenticated(self):
         self.__auth = True
-        self.__cmdlabel.setText('Established connection with ' + str(self.__connection.getsockname()[0]) + ':' + str(self.__connection.getsockname()[1]) + '\n')
+        self.__cmdinput.setPlaceholderText('Type command . . .')
+        self.__cmdinput.setEchoMode(QLineEdit.Normal)
+        self.__cmdlabel.setText('Established connection with ' + str(self.__connection.getpeername()[0]) + ':' + str(self.__connection.getpeername()[1]) + '\n')
     
     
     def __send_message(self):
@@ -191,11 +239,17 @@ class ServerTab(QMainWindow):
             if self.__auth and (command.lower() == 'clear' or command.lower() == 'cls'):
                 self.__cmdinput.setText('')
                 self.__cmdlabel.setText('')
+            elif self.__auth and command.lower().split(' ')[0] == 'rename':
+                self.__cmdlabel.setText(self.__cmdlabel.text() + self.__servername + ' > ' + command + '\n')
+                self.__servername = command.split(' ', 1)[1]
+                self.__parent.renameTab(self.__servername)
+                self.__cmdlabel.setText(self.__cmdlabel.text() + f'Changed name to {self.__servername}\n')
+                self.__cmdinput.setText('')
             else:
                 try:
                     self.__cmdinput.setText('')
                     if self.__auth:
-                        self.__cmdlabel.setText(self.__cmdlabel.text() + 'You > ' + command + '\n')
+                        self.__cmdlabel.setText(self.__cmdlabel.text() + self.__servername + ' > ' + command + '\n')
                         self.__connection.send(('$' + command).encode())
                     else:
                         self.__connection.send(command.encode())
@@ -208,15 +262,12 @@ class ServerTab(QMainWindow):
         self.__cmdlabel.verticalScrollBar().setValue(self.__cmdlabel.verticalScrollBar().maximum())
     
     
-    def __info_box(self, message):
-        self.__messagebox.setIcon(QMessageBox.Information)
-        self.__messagebox.setWindowTitle('Info')
-        self.__messagebox.resize(500, 500)
-        self.__messagebox.exec()
-    
-    
     def closeTab(self):
-        #self.__info_box('Connection was closed.') NEED TO FIX THIS ISSUE (cannot create window because parent is in another thread) !!!
+        self.deleteLater()
+    
+    
+    def __exit(self):
+        self.__connection.close()
         self.deleteLater()
 
 
@@ -244,16 +295,14 @@ def listen(client, this_id:str):
                 client[1].response(cleaned)
                 if not auth and cleaned == 'OK':
                     auth = True
-                    client[1].authentified()
+                    client[1].authenticated()
                 if cleaned == 'closing socket':
                     force_stopped_threads.append(this_id)
         except:
-            #client[1].closeTab()
-            #client[0].close()
             pass
 
 
-def connect(ip: str ,port: int, window):
+def connect(ip: str ,port: int, window, name=None):
     global sockets
     try:
         client_socket = socket.socket()
@@ -263,7 +312,10 @@ def connect(ip: str ,port: int, window):
             id = str(int(list(sockets)[len(list(sockets)) - 1]) + 1)
         else:
             id = '0'
-        tab = window.NewTab('Server ' + id, client_socket)
+        if name is None:
+            tab = window.NewTab('Server ' + id, client_socket)
+        else:
+            tab = window.NewTab(name, client_socket)
         t1 = threading.Thread(target=listen,args=[[client_socket, tab], id])
         t1.start()
         sockets[id] = [client_socket, tab]
