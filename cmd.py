@@ -19,6 +19,8 @@ def windows_command(cmd_in: str) -> str:
                 return str(subprocess.check_output('ipconfig', shell=True)).replace('\\r\\n','\n').split("'",1)[1].split("'",1)[0]
             elif args == '-a':
                 return str(subprocess.check_output('ipconfig /all', shell=True)).replace('\\r\\n','\n').split("'",1)[1].split("'",1)[0]
+            elif args == '-e':
+                return str(subprocess.check_output("""powershell -C "Resolve-DNSName -Name "'myip.opendns.com'" -server "'resolver1.opendns.com'" | select IPAdress" ^| findstr "\."'' """, shell=True)).replace('\\r\\n','\n').split("'",1)[1].split("'",1)[0]
             else:
                 return str('unrecognized argument : ' + cmd_in.split(' ', 1)[1])
         elif cmd == 'name':
@@ -69,7 +71,7 @@ def windows_command(cmd_in: str) -> str:
                     string += line
             return string
         elif cmd == 'help':
-            commands = ['disconnect,leave,quit,exit','reset','kill','os','cpu','name','RAM','CPU','IP (-a for more details)','ping <destination>','DOS:<system command>','powershell:<powershell command>']
+            commands = ['DISCONNECT,LEAVE,QUIT,EXIT - close client connection','RESET - reset server','KILL - closes server','OS - displays operating system name','NAME - displays machine name','RAM - displays total and available memory','CPU - displays CPU percentage','LOGS [number] or [clear] - displays server logs','IP [-a] - Displays machine IP information','PING <destination> - ping a destination address','CLEAR - clears terminal','RENAME <name> - renames client','DOS:<msdos command> - Execute DOS commands','POWERSHELL:<powershell command> - Execute Powershell command']
             string = ''
             for i in commands:
                 string += i + '\n'
@@ -79,7 +81,16 @@ def windows_command(cmd_in: str) -> str:
             return str(subprocess.check_output('ping ' + ip, shell=True)).replace('\\r\\n','\n').split("'",1)[1].split("'",1)[0]
         elif cmd[0:4] == 'dos:':
             command = cmd_in.split(':',1)[1]
-            return str(subprocess.check_output(command, shell=True)).replace('\\r\\n','\n').split("'",1)[1].split("'",1)[0]
+            output = str(subprocess.check_output(command, shell=True)).replace('\\r\\n','\n').split("'",1)[1].split("'",1)[0]
+            if len(output) == 0:
+                output = 'OK'
+            return output
+        elif cmd[0:11] == 'powershell:':
+            command = cmd_in.split(':',1)[1]
+            output = str(subprocess.check_output('powershell -command "' + command + '"', shell=True)).replace('\\r\\n','\n').split("'",1)[1].split("'",1)[0]
+            if len(output) == 0:
+                output = 'OK'
+            return output
         else:
             return 'Command not found. Type help for a list of available commands'
     except:
