@@ -59,7 +59,7 @@ stylesheet = """
 
 
 
-class MainWindow(QDialog):
+class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("My Client")
@@ -72,6 +72,9 @@ QTabBar::tab:selected { background: rgb(245, 245, 245);}""")
         self.__main = MainTab(self)
         self.__tabwidget.addTab(self.__main, "Servers")
         vbox = QVBoxLayout()
+        widget = QWidget()
+        widget.setLayout(vbox)
+        self.setCentralWidget(widget)
         vbox.setContentsMargins(0, 0, 0, 0)
         vbox.addWidget(self.__tabwidget)
         self.setLayout(vbox)
