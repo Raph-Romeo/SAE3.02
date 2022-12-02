@@ -37,13 +37,16 @@ def connect():
 
 def listen(connection,auth):
     global force_stop
+    global reset
     while True:
         if not force_stop:
             try:
                 data = connection.recv(1024)
                 if data is not None:
                     cleaned = data.decode()
-                    if not auth:
+                    if cleaned == '<testing_connection>':
+                        pass
+                    elif not auth:
                         if cleaned == password:
                             auth = True
                             msg = 'OK'
@@ -65,6 +68,7 @@ def listen(connection,auth):
                                 if cleaned == '$kill':
                                     disconnect()
                                 elif cleaned == '$reset':
+                                    reset = True
                                     disconnect()
                                     if authentication:
                                         os.system('python ' + sys.argv[0] + ' ' + str(port) + ' -p ' + password)
@@ -74,18 +78,22 @@ def listen(connection,auth):
             except:
                 pass
         else:
+            if not reset:
+                connection.send('closing socket'.encode())
+            else:
+                connection.send('resetting'.encode())
+            connection.close()
             break
 
 
 def accept(server_socket):
-    global connections
     while True:
         if not force_stop:
             try:
                 conn, addr = server_socket.accept()
                 if authentication:
                     isAuthenticated = False
-                    conn.send('Enter password:'.encode())
+                    conn.send('enter password'.encode())
                 else:
                     isAuthenticated = True
                     conn.send('OK'.encode())
@@ -112,7 +120,7 @@ if __name__ == '__main__':
         try:
             port = int(sys.argv[1])
         except:
-            print('Invalid port!')
+            print('Invalid port! (must be a numeric value)')
             sys.exit()
         if len(sys.argv) == 4:
             if sys.argv[2] == '-p':
@@ -125,4 +133,5 @@ if __name__ == '__main__':
         print('Usage: python ' + sys.argv[0] + ' <port number>\nFor authenticated connection use: -p <password>')
         sys.exit()
     force_stop = False
+    reset = False
     main()
