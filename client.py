@@ -97,7 +97,7 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(QIcon("icon.png"))
         self.__tabwidget = QTabWidget()
         self.__tabwidget.setStyleSheet("""QTabWidget::pane {border:0px;background: rgb(245, 245, 245);; } 
-QTabBar::tab {background: rgb(36,38,41);border:none;padding:20px;color:#AAA;border-top-right-radius:15px;border-top-left-radius:15px;}
+QTabBar::tab {background: rgb(36,38,41);border:none;padding:15px;color:#AAA;}
 QTabBar::tab:hover {background:rgb(43,45,50);color:white;}
 QTabBar::tab:selected {background:rgb(43,45,50);color:white;}""")
         self.__main = MainTab(self)
@@ -388,7 +388,7 @@ class ServerTab(QMainWindow):
                     self.cmdline.cmdinput.setText('')
                     if self.__auth:
                         self.cmdline.addText(self.servername + ' >  ' + command)
-                        self.__connection.send(('$' + command).encode())
+                        self.__connection.send((command).encode())
                     else:
                         self.__connection.send(command.encode())
                 except:
@@ -408,10 +408,7 @@ class ServerTab(QMainWindow):
     
     def __exit(self):
         try:
-            if self.__auth:
-                self.__connection.send('$exit'.encode())
-            else:
-                self.__connection.send('exit'.encode())
+            self.__connection.send('exit'.encode())
         except:
             self.__connection.close()
             self.closeTab()
@@ -427,13 +424,14 @@ def disconnect(id:str):
 def attempt_reconnect(address):
     for i in range(0,5):
         client_socket = socket.socket()
+        time.sleep(1)
         try:
             client_socket.connect((address[0],address[1]))
             client_socket.setblocking(0)
             client_socket.send('<testing_connection>'.encode())
             return client_socket
         except:
-            time.sleep(1)
+            pass
     return None
 
 
