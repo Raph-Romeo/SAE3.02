@@ -1,13 +1,12 @@
 import threading
 import socket
 import sys
-import time
 from datetime import datetime
 from cmd import execute
 
 
 class Client:
-    def __init__(self, auth:bool, connection):
+    def __init__(self, auth: bool, connection):
         self.__auth = auth
         self.__connection = connection
         self.__open = True
@@ -29,7 +28,7 @@ class Client:
     def is_open(self) -> bool:
         return self.__open
 
-    def send(self, msg):
+    def send(self, msg) -> bool:
         try:
             self.__connection.send(msg.encode())
             return True
@@ -42,10 +41,7 @@ class Client:
                 data = self.__connection.recv(payload)
                 if len(data) > 0:
                     return data.decode()
-                else:
-                    return None
-            else:
-                return None
+            return None
         except:
             return None
 
