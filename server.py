@@ -2,7 +2,8 @@ import threading
 import socket
 import sys
 from datetime import datetime
-from cmd import execute
+from cmd import execute, cpu_percent, ram_percent
+import time
 
 
 class Client:
@@ -10,6 +11,26 @@ class Client:
         self.__auth = auth
         self.__connection = connection
         self.__open = True
+        self.__cpu_graph_sub = False
+        self.__ram_graph_sub = False
+
+    def is_cpu_subbed(self) -> bool:
+        return self.__cpu_graph_sub
+
+    def is_ram_subbed(self) -> bool:
+        return self.__ram_graph_sub
+
+    def sub_cpu(self, state):
+        if state:
+            self.__cpu_graph_sub = True
+        else:
+            self.__cpu_graph_sub = False
+
+    def sub_ram(self, state):
+        if state:
+            self.__ram_graph_sub = True
+        else:
+            self.__ram_graph_sub = False
 
     def is_authenticated(self) -> bool:
         return self.__auth
@@ -54,14 +75,17 @@ class Server:
         self.__password = password
         self.__forcestop = False
         self.__clients = []
+        self.__resetting = False
 
     def log(self, info: str) -> None:
-        with open('logs.txt', 'a') as file:
-            text = datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ' : ' + info + '\n'
-            file.write(text)
-            return
+        try:
+            with open('logs.txt', 'a') as file:
+                text = datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ' : ' + info + '\n'
+                file.write(text)
+        except:
+            print("Couldn't write to logs")
 
-    def start(self):
+    def start(self, option: int = 0):
         self.__server = socket.socket()
         try:
             self.__server.bind((self.__host, self.__port))
@@ -73,6 +97,8 @@ class Server:
         else:
             self.log('Sarted server')
             threading.Thread(target=self.__accept).start()
+            if option == 0:
+                threading.Thread(target=self.__graph).start()
 
     def __accept(self):
         while not self.__forcestop:
@@ -87,6 +113,15 @@ class Server:
                 threading.Thread(target=self.__listen, args=[c]).start()
             except:
                 pass
+
+    def __graph(self):
+        while not self.__forcestop and not self.__resetting:
+            time.sleep(1)
+            for client in self.__clients:
+                if client.is_cpu_subbed():
+                    client.send('<CPU|' + str(cpu_percent()) + '|>')
+                if client.is_ram_subbed():
+                    client.send('<RAM|' + str(ram_percent()) + '|>')
 
     def __disconnect(self, c):
         c.close()
@@ -118,6 +153,18 @@ class Server:
                         self.__close()
                     elif cmd == 'reset':
                         self.__reset()
+                    elif cmd == '<sub_cpu_true>':
+                        c.sub_cpu(True)
+                        c.send('Subscribed to CPU topic')
+                    elif cmd == '<sub_ram_true>':
+                        c.sub_ram(True)
+                        c.send('Subscribed to RAM topic')
+                    elif cmd == '<sub_cpu_false>':
+                        c.sub_cpu(False)
+                        c.send('Unsubscribed from CPU topic')
+                    elif cmd == '<sub_ram_false>':
+                        c.sub_ram(False)
+                        c.send('Unsubscribed from RAM topic')
                     else:
                         threading.Thread(target=execute, args=[c, data]).start()
 
@@ -132,10 +179,12 @@ class Server:
         self.__server.close()
 
     def __reset(self):
+        self.__resetting = True
         self.__close('resetting')
         self.__clients = []
         self.__forcestop = False
-        self.start()
+        self.start(1)
+        self.__resetting = False
 
 
 def main():
