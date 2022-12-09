@@ -369,7 +369,10 @@ class ServerTab(QMainWindow):
         self.cmdline.label.setHidden(True)
 
     def closeTab(self):
-        self.__parent.connections_remove(self)
+        try:
+            self.__parent.connections_remove(self)
+        except:
+            pass
         self.deleteLater()
 
     def multi_exit(self):
