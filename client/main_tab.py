@@ -1,5 +1,5 @@
 import socket
-from PyQt5.QtWidgets import QWidget, QMainWindow, QGridLayout, QLabel, QLineEdit, QPushButton, QComboBox, QMenu, QDialog, QTabWidget, QVBoxLayout, QMessageBox, QDialogButtonBox, QTableWidget, QTableView, QScrollArea, QTableWidgetItem, QAbstractItemView, QHeaderView
+from PyQt5.QtWidgets import QWidget, QMainWindow, QGridLayout, QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem, QAbstractItemView, QHeaderView, QFileDialog
 from PyQt5.QtGui import QCursor
 from PyQt5 import Qt
 from PyQt5.QtCore import QObject, QThread, pyqtSignal
@@ -14,6 +14,7 @@ class MainTab(QMainWindow):
         self.__parent = window
         self.setCentralWidget(widget)
         self.__grid = QGridLayout()
+        self.__grid.setSpacing(0)
         self.__grid.setContentsMargins(0, 0, 0, 0)
         widget.setLayout(self.__grid)
         self.__nameinput = QLineEdit()
@@ -22,25 +23,29 @@ class MainTab(QMainWindow):
         self.__ipinput.setPlaceholderText('ADDRESS')
         self.__portinput = QLineEdit()
         self.__portinput.setPlaceholderText('PORT')
-        self.__addbutton = QPushButton('+')
+        self.__addbutton = QPushButton('OK')
         self.__addbutton.clicked.connect(self.__add_table_row)
         self.__addbutton.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
         self.__addbutton.setToolTip('Confirm')
-        self.__inputlabel = QLabel('Add server to list')
+        self.__inputlabel = QLabel('Add server to list:')
         self.__filename = file_name
+        self.__file_explorer_button = QPushButton("Select CSV file")
+        self.__file_explorer_button.setStyleSheet("""border-radius:2px;background:#202225;font-size:12px;font-family:verdana;color:white;padding:5px;margin:2px;margin-top:0px;padding-left:10px;padding-right:10px;""")
+        self.__file_explorer_button.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+        self.__file_explorer_button.clicked.connect(self.__open_csv_file)
         self.__table = self.__maketable()
         self.setStyleSheet("""
-        QMainWindow{background:rgb(43,45,50)} 
-        QHeaderView::section{background:rgb(43,45,50);border:0px solid;padding:5px;color:white;font-family:verdana;font-size:12px;font-weight:bold} 
-        QTableWidget::item{border:0px;padding: 5px;border-bottom:1px solid rgb(66,70,77);margin:1px;} 
-        QTableWidget{gridline-color:transparent;color:#FFF;font-family:Verdana;font-size:12px;border:0px transparent;background:rgb(54,57,63)} 
+        QMainWindow{background:rgb(54,57,63)} 
+        QHeaderView::section{background:rgb(54,57,63);border:0px solid;color:white;font-family:verdana;font-size:12px;font-weight:bold} 
+        QTableWidget::item{border:0px;border-bottom:1px solid rgb(56,60,67);margin:1px;padding:10px;} 
+        QTableWidget{gridline-color:transparent;color:#FFF;font-family:Verdana;font-size:12px;border:0px transparent;background:rgb(32,34,37)} 
         QTableWidget::item:hover{background: rgb(66,70,77);color: #FFF;font-weight:999;border-radius:5px;} 
         QTableWidget::item:selected {background: rgb(66,70,77);color: #FFF;font-weight:999;border-radius:5px;} 
-        QHeaderView::section{border-top:0px;border-left:0px;border-bottom: 2px solid rgb(43,45,50);padding:4px;}
+        QHeaderView::section{border-top:0px;border-left:0px;border-bottom: 1px solid rgb(43,45,50);padding-left:4px;padding-top:13px;padding-bottom:14px;}
         QTableCornerButton::section{border-top:0px solid #D8D8D8;border-left:0px solid #D8D8D8;border-bottom: 2px solid rgb(43,45,50);}
-        QLineEdit{border:none;border-radius:5px;background:#202225;font-size:12px;padding:5px;font-family:verdana;color:#FFF;margin:3px;margin-top:0px}
-        QPushButton{border-radius:5px;background:#202225;font-size:12px;font-family:arial;color:#FFF;padding:5px;margin:3px;margin-top:0px;padding-left:10px;padding-right:10px;}
-        QLabel{font-size:12px;padding-left:20px;padding-bottom:5px;padding-top:10px;color:#FFF;font-weight:bold;font-family:verdana;border-top:2px solid rgb(43,45,50);}
+        QLineEdit{border:none;border-radius:2px;background:#202225;font-size:12px;padding:5px;font-family:verdana;color:#FFF;margin:2px;margin-top:0px;}
+        QPushButton{border-radius:2px;background:#202225;font-size:12px;font-family:arial;color:#FFF;padding:5px;margin:2px;margin-top:0px;padding-left:10px;padding-right:10px;}
+        QLabel{font-size:12px;padding-left:10px;padding-bottom:5px;padding-top:10px;color:#FFF;font-family:verdana;}
         QScrollBar:vertical{background-color: rgb(34,37,43);width: 15px;margin: 15px 3px 15px 3px;border: 1px transparent;border-radius: 4px;}
         QScrollBar::handle:vertical{background-color: #dadce0;min-height: 5px;border-radius: 4px;}
         QScrollBar::sub-line:vertical{margin: 3px 0px 3px 0px;height: 0px;width: 0px;subcontrol-position: top;subcontrol-origin: margin;}
@@ -56,6 +61,7 @@ class MainTab(QMainWindow):
         self.__grid.addWidget(self.__ipinput, 2, 1)
         self.__grid.addWidget(self.__portinput, 2, 2)
         self.__grid.addWidget(self.__addbutton, 2, 3)
+        self.__grid.addWidget(self.__file_explorer_button, 3, 0, 1, 4)
 
     def __maketable(self):
         tableWidget = QTableWidget()
@@ -93,6 +99,27 @@ class MainTab(QMainWindow):
                     return True
         return False
 
+    def __open_csv_file(self):
+        fname, _ = QFileDialog.getOpenFileName(self, 'Open datafile', 'c:\\', "CSV or TXT files (*.txt *.csv)")
+        self.__filename = fname
+        if self.__filename != '':
+            try:
+                self.__table.setRowCount(0)
+                with open(self.__filename, 'r') as file:
+                    lines = file.readlines()
+                    for i in range(len(lines)):
+                        data = lines[i].replace('\n', '').split(',')
+                        if self.line_is_valid(data):
+                            row = self.__table.rowCount()
+                            self.__table.setRowCount(row + 1)
+                            self.__table.setItem(row, 0, QTableWidgetItem(data[0]))
+                            self.__table.setItem(row, 1, QTableWidgetItem(data[1]))
+                        else:
+                            pass
+            except:
+                with open(self.__filename, 'w') as file:
+                    file.write('')
+
     def __tableitemselect(self, item):
         ip = self.__table.item(item.row(), 1).text().split(':')[0]
         port = self.__table.item(item.row(), 1).text().split(':')[1]
@@ -116,8 +143,21 @@ class MainTab(QMainWindow):
             self.__table.setRowCount(self.__table.rowCount() + 1)
             self.__table.setItem(row, 0, QTableWidgetItem(name))
             self.__table.setItem(row, 1, QTableWidgetItem(address))
-            with open(self.__filename, 'a') as file:
-                file.write(name + ',' + address + '\n')
+            try:
+                with open(self.__filename, 'r') as file:
+                    lines = file.readlines()
+                    last = lines[len(lines) - 1]
+                    if last[len(last) - 1:len(last)] == '\n':
+                        skip_to_next_line = False
+                    else:
+                        skip_to_next_line = True
+                with open(self.__filename, 'a') as file:
+                    if skip_to_next_line:
+                        file.write('\n' + name + ',' + address)
+                    else:
+                        file.write(name + ',' + address)
+            except:
+                self.__parent.error('File is missing!')
         else:
             self.__parent.error('Form is invalid!')
 
@@ -129,7 +169,6 @@ class MainTab(QMainWindow):
 
 
     def __result(self, n):
-        global sockets
         state = n[0]
         data = n[1]
         if state:

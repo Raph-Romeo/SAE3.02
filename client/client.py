@@ -7,7 +7,7 @@ def main():
     if len(sys.argv) == 2:
         file = sys.argv[1]
     else:
-        file = 'iplist.txt'
+        file = 'iplist.csv'
     app = QApplication(sys.argv)
     window = MainWindow(file)
     window.show()
