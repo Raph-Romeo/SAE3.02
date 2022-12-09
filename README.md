@@ -24,17 +24,15 @@ You must download and extract all the files available on this GITHUB.
 Get the required packages:
 
 **Requirements (for Client):**
-Python version: 3.10 or newer
-PIP PACKAGES:
-'''
+> Python version: 3.10 or newer
+```
   pip install PyQt5==5.15.7
   pip install PyQt5-Qt5==5.15.2
   pip install PyQt5-sip==12.11.0
   pip install pyqtgraph==0.13.1
-'''
+```
 **Requirements (for Server):**
-Python version: 3.10 or newer
-PIP PACKAGES:
-'''
+> Python version: 3.10 or newer
+```
   pip install psutil==5.9.4
-'''
+```
