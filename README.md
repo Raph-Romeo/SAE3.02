@@ -19,9 +19,8 @@ A client will also be able to execute all system commands.
 
 **────────────────────────────────────────────────────────**
 
-# To get started,
+### To get started,
 You must download and extract all the files available on this GITHUB.
-Next,
 Get the required packages:
 
 **Requirements (for Client):**
