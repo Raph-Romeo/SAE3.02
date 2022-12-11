@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QMainWindow, QGridLayout, QLabel, QLineEdit, QPushButton, QHBoxLayout, QComboBox, QMenu, QDialog, QTabWidget, QVBoxLayout, QMessageBox, QDialogButtonBox, QTableWidget, QTableView, QScrollArea, QTableWidgetItem, QAbstractItemView, QHeaderView
+from PyQt5.QtWidgets import QWidget, QGridLayout, QLabel, QLineEdit, QPushButton, QHBoxLayout, QVBoxLayout, QScrollArea
 from PyQt5.QtGui import QCursor, QIcon
 from PyQt5 import Qt
 import socket
@@ -24,29 +24,33 @@ class Graph(QWidget):
         self.__display.setAlignment(Qt.Qt.AlignCenter)
         layout.addWidget(self.__display)
         layout.addWidget(self.graphWidget)
-        self.x = []
+        self.x = list(range(0,25))
         self.y = []
+        for i in range(0, 25):
+            self.y.append(0)
         self.graphWidget.setBackground('#202225')
+        self.graphWidget.setYRange(0, 100)
+        self.graphWidget.showGrid(y=True, alpha=10)
+        self.graphWidget.getAxis('left').setPen('#333')
+        self.graphWidget.getPlotItem().hideAxis('bottom')
         pen = pg.mkPen(color=(255, 255, 255))
-        self.data_line = self.graphWidget.plot(self.x, self.y, pen=pen)
+        self.graphWidget.plot()
+        self.data_line = self.graphWidget.plot(self.x, self.y, pen)
 
     def update_plot_data(self, data):
         self.__display.setText(self.__type + ': ' + str(data) + '%')
-        if len(self.x) >= 25:
-            self.x = self.x[1:]
-        if len(self.x) == 0:
-            self.x = [0]
-        else:
-            self.x.append(self.x[-1] + 1)
-        if len(self.y) >= 25:
-            self.y = self.y[1:]
+        self.x = self.x[1:]
+        self.x.append(self.x[-1] + 1)
+        self.y = self.y[1:]
         self.y.append(data)
         self.data_line.setData(self.x, self.y)
 
     def clear_plot(self):
         self.__display.setText(self.__type + ': --%')
-        self.x = []
+        self.x = list(range(0, 25))
         self.y = []
+        for i in range(0, 25):
+            self.y.append(0)
         self.data_line.setData(self.x, self.y)
 
 
@@ -166,14 +170,14 @@ class ScrollLabel(QScrollArea):
         self.cmdinput.setText('')
 
 
-class ServerTab(QMainWindow):
+class ServerTab(QWidget):
     def __init__(self, connection, parent, servername):
         super().__init__()
-        widget = QWidget()
         grid = QGridLayout()
         grid.setSpacing(0)
         grid.setContentsMargins(0, 0, 0, 0)
-        widget.setLayout(grid)
+        self.setLayout(grid)
+        self.setAttribute(Qt.Qt.WA_StyledBackground, True)
         self.setStyleSheet("""
         *{background:rgb(54,57,63);color:white;padding:0;margin:0}
         QPushButton{background-color:transparent;padding:5px;border:none;color:#727272;font-weight:100;font-family:arial;text-align:center;font-size:20px;font-weight:bold;}
@@ -186,7 +190,6 @@ class ServerTab(QMainWindow):
         QLabel[toplabel="true"]{color:rgb(249,249,249);font-size:12px;font-family:verdana;padding-left:10px;}
         """)
         self.__stop = False
-        self.setCentralWidget(widget)
         self.__connection = connection
         self.__parent = parent
         self.__auth = False

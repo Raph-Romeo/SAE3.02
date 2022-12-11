@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QMainWindow, QGridLayout, QLabel, QLineEdit, QPushButton, QHBoxLayout,  QTableWidget, QAbstractItemView, QHeaderView
+from PyQt5.QtWidgets import QWidget, QGridLayout, QLabel, QLineEdit, QPushButton, QHBoxLayout,  QTableWidget, QAbstractItemView, QHeaderView
 from PyQt5.QtGui import QCursor, QIcon, QPixmap
 from PyQt5 import Qt
 from PyQt5 import QtCore
@@ -60,17 +60,18 @@ class connections_title(QWidget):
         self.setLayout(layout)
 
 
-class ConnectionList(QMainWindow):
+class ConnectionList(QWidget):
     def __init__(self, parent):
         super().__init__()
-        widget = QWidget()
-        grid = QGridLayout(widget)
+        grid = QGridLayout()
+        self.setLayout(grid)
+        self.setAttribute(Qt.Qt.WA_StyledBackground, True)
         grid.setSpacing(0)
         grid.setContentsMargins(0, 0, 0, 0)
-        self.setCentralWidget(widget)
         self.__parent = parent
+        self.setObjectName("body")
         self.setStyleSheet("""
-        QMainWindow{background:rgb(47,49,54)}
+        QWidget#body{background:rgb(47,49,54)}
         """)
         top_bar = QLabel('Connection list')
         top_bar.setFixedHeight(51)
