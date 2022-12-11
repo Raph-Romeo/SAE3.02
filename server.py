@@ -96,6 +96,7 @@ class Server:
             sys.exit()
         else:
             self.log('Sarted server')
+            print('Server started')
             threading.Thread(target=self.__accept).start()
             if option == 0:
                 threading.Thread(target=self.__graph).start()
