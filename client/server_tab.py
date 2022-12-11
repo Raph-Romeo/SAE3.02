@@ -86,24 +86,27 @@ class ScrollLabel(QScrollArea):
     QScrollBar::add-line:horizontal:hover, QScrollBar::add-line:horizontal:on{height: 0px;width: 0px;subcontrol-position: bottom;subcontrol-origin: margin;}
     QScrollBar::up-arrow:horizontal, QScrollBar::down-arrow:horizontal{background: none;opacity: 0%;height: 0px;width:0px;}
     QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal{background: none;opacity: 0%;height: 0px;width:0px;}
-    QLabel{color:white;font-family:Consolas;font-size:15px;border:none;background-color:transparent;padding:0px;padding-left:10px;padding-right:10px;padding-top:0px;}
-    QLineEdit{border:none;margin:0px;padding:0px;font-family:Consolas;color:white;font-size:15px;padding-bottom:10px;padding-top:0px;}
+    QLabel{color:white;font-family:Consolas;font-size:15px;border:0px solid black;background-color:transparent;padding:0px;padding-left:10px;padding-right:10px;margin:0px;}
+    QLineEdit{border:0px solid black;margin:0px;padding:0px;font-family:Consolas;color:white;font-size:15px;padding-bottom:10px;text-indent:0px;}
 """)
         self.label = QLabel('')
         self.label.setWordWrap(True)
         self.label.setAlignment(Qt.Qt.AlignTop)
         self.blankspace = QWidget()
         self.blankspace.setFixedHeight(10)
-        self.username = QLabel(self.parent.servername + ' >')
+        self.username = QLabel(self.parent.servername + ' > ')
         self.username.setStyleSheet("color:white;font-family:Consolas;font-size:15px;border-bottom:none;background-color:transparent;padding-left:10px;padding-bottom:10px;padding-right:0px;")
+        self.username.setIndent(0)
         self.cmdinput = QLineEdit('')
         self.cmdinput.setPlaceholderText('Type password ...')
         self.cmdinput.returnPressed.connect(self.parent.handle_input)
         self.cmdinput.setAlignment(Qt.Qt.AlignTop)
         self.cmdinput.setEchoMode(QLineEdit.Password)
         self.cmdinput.textChanged.connect(self.__highlight)
-        self.cmdinput.isActiveWindow()
-        self.cmdinput.setFocus()
+        self.cmdinput.setAlignment(Qt.Qt.AlignLeft)
+        self.cmdinput.setFrame(False)
+        self.label.setIndent(0)
+        self.label.setWindowFlag(Qt.Qt.FramelessWindowHint)
         self.cmdinput.setFocusPolicy(Qt.Qt.StrongFocus)
         self.index = 0
         self.history = []
@@ -296,7 +299,7 @@ class ServerTab(QWidget):
                         self.servername = command.split(' ', 1)[1]
                         self.__titlelabel.setText(self.servername)
                         self.__parent.renameTab(self.servername)
-                        self.cmdline.username.setText(self.servername + ' >')
+                        self.cmdline.username.setText(self.servername + ' > ')
                         self.cmdline.addText(f'Changed name to {self.servername}')
                     else:
                         self.cmdline.addText('Usage: RENAME <NAME>')
