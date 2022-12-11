@@ -86,8 +86,8 @@ class ScrollLabel(QScrollArea):
     QScrollBar::add-line:horizontal:hover, QScrollBar::add-line:horizontal:on{height: 0px;width: 0px;subcontrol-position: bottom;subcontrol-origin: margin;}
     QScrollBar::up-arrow:horizontal, QScrollBar::down-arrow:horizontal{background: none;opacity: 0%;height: 0px;width:0px;}
     QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal{background: none;opacity: 0%;height: 0px;width:0px;}
-    QLabel{color:white;font-family:Consolas;font-size:15px;border:0px solid black;background-color:transparent;padding:0px;padding-left:10px;padding-right:10px;margin:0px;}
-    QLineEdit{border:0px solid black;margin:0px;padding:0px;font-family:Consolas;color:white;font-size:15px;padding-bottom:10px;text-indent:0px;margin-left:-2px;}
+    QLabel{color:white;font-family:Consolas;font-size:15px;border:0px solid black;background-color:transparent;padding:0px;padding-left:10px;padding-right:10px;margin:0px;text-indent:0px;}
+    QLineEdit{border:0px solid black;margin:0px;padding:0px;font-family:Consolas;color:white;font-size:15px;padding-bottom:10px;text-indent:0px;margin-left:-2px;margin-top:-1px;}
 """)
         self.label = QLabel('')
         self.label.setWordWrap(True)
@@ -97,6 +97,8 @@ class ScrollLabel(QScrollArea):
         self.username = QLabel(self.parent.servername + ' > ')
         self.username.setStyleSheet("color:white;font-family:Consolas;font-size:15px;border-bottom:none;background-color:transparent;padding-left:10px;padding-bottom:10px;padding-right:0px;")
         self.username.setIndent(0)
+        self.username.setWindowFlag(Qt.Qt.FramelessWindowHint)
+        self.username.setAlignment(Qt.Qt.AlignTop)
         self.cmdinput = QLineEdit('')
         self.cmdinput.setPlaceholderText('Type password ...')
         self.cmdinput.returnPressed.connect(self.parent.handle_input)
@@ -108,7 +110,6 @@ class ScrollLabel(QScrollArea):
         self.cmdinput.setFrame(False)
         self.label.setIndent(0)
         self.label.setWindowFlag(Qt.Qt.FramelessWindowHint)
-        self.label.setStyleSheet('margin-top:1px')
         self.cmdinput.setFocusPolicy(Qt.Qt.StrongFocus)
         self.index = 0
         self.history = []
