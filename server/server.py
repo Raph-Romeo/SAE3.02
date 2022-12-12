@@ -40,7 +40,7 @@ class Client:
 
     def close(self, param='closing socket') -> None:
         try:
-            self.__connection.send(param.encode())
+            self.__connection.send(('\n' + param).encode())
         except:
             pass
         self.__connection.close()
@@ -49,7 +49,9 @@ class Client:
     def is_open(self) -> bool:
         return self.__open
 
-    def send(self, msg) -> bool:
+    def send(self, msg, topic=False) -> bool:
+        if not topic:
+            msg = '\n' + msg
         try:
             self.__connection.send(msg.encode())
             return True
@@ -120,9 +122,9 @@ class Server:
             time.sleep(1)
             for client in self.__clients:
                 if client.is_cpu_subbed():
-                    client.send('<CPU|' + str(cpu_percent()) + '|>')
+                    client.send('<CPU|' + str(cpu_percent()) + '|>', True)
                 if client.is_ram_subbed():
-                    client.send('<RAM|' + str(ram_percent()) + '|>')
+                    client.send('<RAM|' + str(ram_percent()) + '|>', True)
 
     def __disconnect(self, c):
         c.close()
