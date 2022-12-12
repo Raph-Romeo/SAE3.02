@@ -1,10 +1,10 @@
 from PyQt5.QtWidgets import QWidget, QMainWindow, QTabWidget, QGridLayout, QMessageBox
 from PyQt5.QtGui import QIcon
-from main_tab import MainTab
-from server_tab import ServerTab
-from navbar import NavBar
-from connection_list import ConnectionList
-from add_connection import NewConnectionTab
+from assets.main_tab import MainTab
+from assets.server_tab import ServerTab
+from assets.navbar import NavBar
+from assets.connection_list import ConnectionList
+from assets.add_connection import NewConnectionTab
 
 
 class MainWindow(QMainWindow):
@@ -25,7 +25,7 @@ class MainWindow(QMainWindow):
         grid.setContentsMargins(0, 0, 0, 0)
         grid.setSpacing(0)
         self.setCentralWidget(widget)
-        self.setWindowIcon(QIcon("assets/icon.png"))
+        self.setWindowIcon(QIcon("assets/img/icon.png"))
         self.__connections = []
         self.__tab_widget = QTabWidget()
         self.__main = MainTab(self, file_path)

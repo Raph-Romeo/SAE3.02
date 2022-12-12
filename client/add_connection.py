@@ -30,7 +30,7 @@ class NewConnectionTab(QWidget):
         self.port_input.returnPressed.connect(self.connect)
         self.port_input.setPlaceholderText('PORT')
         self.connect_button = QPushButton(' CONNECT')
-        self.connect_button.setIcon(QIcon('assets/connect.png'))
+        self.connect_button.setIcon(QIcon('assets/img/connect.png'))
         self.connect_button.clicked.connect(self.connect)
         self.connect_button.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
         layout.addWidget(top_bar, 0, 0, alignment=Qt.Qt.AlignTop)

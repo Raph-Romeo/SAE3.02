@@ -22,7 +22,7 @@ class NavBar(QScrollArea):
         layout.setRowStretch(3, 2)
         self.home = QToolButton()
         self.home.setToolButtonStyle(Qt.Qt.ToolButtonTextUnderIcon)
-        self.home.setIcon(QIcon('assets/home.png'))
+        self.home.setIcon(QIcon('assets/img/home.png'))
         self.home.setStyleSheet('QToolButton{padding-top:20px;}')
         self.home.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
         self.home.setToolTip('Home')
@@ -34,7 +34,7 @@ class NavBar(QScrollArea):
 
         self.connectbutton = QToolButton()
         self.connectbutton.setToolButtonStyle(Qt.Qt.ToolButtonTextUnderIcon)
-        self.connectbutton.setIcon(QIcon('assets/connect.png'))
+        self.connectbutton.setIcon(QIcon('assets/img/connect.png'))
         self.connectbutton.setStyleSheet('QToolButton{padding-top:20px;}')
         self.connectbutton.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
         self.connectbutton.setToolTip('Connect')
@@ -46,7 +46,7 @@ class NavBar(QScrollArea):
 
         self.sidebar = QToolButton()
         self.sidebar.setToolButtonStyle(Qt.Qt.ToolButtonTextUnderIcon)
-        self.sidebar.setIcon(QIcon('assets/menu_toggle.png'))
+        self.sidebar.setIcon(QIcon('assets/img/menu_toggle.png'))
         self.sidebar.setStyleSheet('QToolButton{padding-top:20px;}')
         self.sidebar.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
         self.sidebar.setToolTip('Show side panel')
