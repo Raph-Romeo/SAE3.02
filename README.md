@@ -1,4 +1,5 @@
 # SAE3.02 Self-monitoring Application
+I chose to name my application SUPERSHELL
 
 ## WHAT IS A SUPERSHELL SERVER?
 
