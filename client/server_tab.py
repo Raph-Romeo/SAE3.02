@@ -162,9 +162,9 @@ class ScrollLabel(QScrollArea):
 
     def addText(self, text):
         if self.label.text() != "":
-            self.label.setText(self.text() + '\n' + text)
+            self.label.setText(self.text() + text)
         else:
-            self.label.setText(text)
+            self.label.setText(text[1:])
             self.label.setHidden(False)
 
     def text(self):
@@ -267,7 +267,7 @@ class ServerTab(QWidget):
             self.clear()
             self.__cpugraphbutton.setDisabled(False)
             self.__ramgraphbutton.setDisabled(False)
-            self.cmdline.addText('Established connection with ' + str(self.__connection.getpeername()[0]) + ':' + str(self.__connection.getpeername()[1]))
+            self.cmdline.addText('\nEstablished connection with ' + str(self.__connection.getpeername()[0]) + ':' + str(self.__connection.getpeername()[1]))
         else:
             self.__auth = False
             self.__cpugraphbutton.setDisabled(True)
@@ -292,7 +292,7 @@ class ServerTab(QWidget):
             if not self.__auth:
                 self.send(command)
             else:
-                self.cmdline.addText(self.servername + ' > ' + command)
+                self.cmdline.addText('\n' + self.servername + ' > ' + command)
                 if len(self.cmdline.history) == 0 or self.cmdline.history[len(self.cmdline.history) - 1] != command:
                     self.cmdline.history.append(command)
                 if (command.lower() == 'clear' or command.lower() == 'cls'):
@@ -303,9 +303,9 @@ class ServerTab(QWidget):
                         self.__titlelabel.setText(self.servername)
                         self.__parent.renameTab(self.servername)
                         self.cmdline.username.setText(self.servername + ' > ')
-                        self.cmdline.addText(f'Changed name to {self.servername}')
+                        self.cmdline.addText(f'\nChanged name to {self.servername}')
                     else:
-                        self.cmdline.addText('Usage: RENAME <NAME>')
+                        self.cmdline.addText('\nUsage: RENAME <NAME>')
                 else:
                     self.send(command)
 
@@ -316,7 +316,7 @@ class ServerTab(QWidget):
         try:
             self.__connection.send(msg.encode())
         except:
-            self.cmdline.addText('Conection was lost.')
+            self.cmdline.addText('\nConection was lost.')
 
     def __subscribe_cpu(self):
         if self.__cpugraphsub:
@@ -347,16 +347,16 @@ class ServerTab(QWidget):
             self.__graph_hold.setHidden(False)
 
     def response(self, data):
-        if not self.__auth and data == 'OK':
+        if not self.__auth and data == '\nOK':
             return self.authenticated(True)
-        if data == 'closing socket':
+        if data == '\nclosing socket':
             self.__stop = True
             self.closeTab()
-        elif data == 'resetting':
+        elif data == '\nresetting':
             address = self.__connection.getpeername()
             self.__connection.close()
             self.clear()
-            self.cmdline.addText('trying to reconnect ...')
+            self.cmdline.addText('\ntrying to reconnect ...')
             self.__connection = self.attempt_reconnect(address)
             if self.__connection is None:
                 self.closeTab()
