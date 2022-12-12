@@ -2,6 +2,9 @@ import sys
 import psutil
 from socket import gethostname, gethostbyname
 import subprocess
+from commands.linux import linux
+from commands.other import other
+from commands.windows import windows
 import platform
 
 
@@ -80,139 +83,11 @@ def execute(client, data):
         client.send(string)
     else:
         if sys.platform == 'win32':
-            if cmd == 'help':
-                commands = """AVAILABLE COMMANDS:
-    DISCONNECT,LEAVE,QUIT,EXIT - disconnect
-    RESET - reset server
-    KILL - closes server OR task. KILL [taskname]
-    OS - displays info on operating system (use -a for more details)
-    NAME - displays machine name
-    RAM - displays total,used and available memory
-    CPU - displays CPU percentage
-    LOGS [number] or [clear] - displays server logs
-    IP - Displays machine local IP
-    PING <destination> - ping a destination address
-    CLEAR - clears terminal
-    RENAME <name> - renames client
-    DOS:<msdos command> - Execute DOS commands
-    POWERSHELL:<powershell command> - Execute Powershell command"""
-                client.send(commands)
-            elif cmd == 'ping':
-                if args:
-                    client.send('Trying to ping at ' + data.split(' ', 1)[1] + '...')
-                    process = subprocess.Popen(data, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8', shell=True)
-                    output = process.stdout.read()
-                    if len(output) == 0:
-                        output = process.stderr.read()
-                else:
-                    output = 'Usage : ping <DESTINATION>'
-                client.send(output)
-            elif cmd == 'kill':
-                if args:
-                    output = subprocess.check_output('taskkill /F /IM ' + cmd_split[1] + ' /T', shell=True).decode()
-                    client.send(output)
-            elif cmd[0:4] == 'dos:':
-                command = data.split(':', 1)[1]
-                if len(command) == 0:
-                    client.send('Usage : dos:<COMMAND>')
-                    return
-                process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8', shell=True)
-                output = process.stdout.read()
-                if len(output) == 0:
-                    output = process.stderr.read()
-                if len(output) == 0:
-                    output = 'success'
-                client.send(output)
-            elif cmd[0:11] == 'powershell:':
-                command = data.split(':', 1)[1]
-                if len(command) == 0:
-                    client.send('Usage : powershell:<COMMAND>')
-                    return
-                process = subprocess.Popen('powershell -command "' + command + '"', stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8', shell=True)
-                output = process.stdout.read()
-                if len(output) == 0:
-                    output = process.stderr.read()
-                if len(output) == 0:
-                    output = 'success'
-                client.send(output)
-            elif cmd[0:6] == 'linux:' or cmd[0:6] == 'macos:':
-                client.send('This is a windows machine, try using "dos:" instead')
-            else:
-                client.send('Command not found. Type help for a list of available commands')
+            windows(client, cmd, cmd_split, data, args)
         elif sys.platform == 'linux' or sys.platform == 'linux2':
-            if cmd == 'help':
-                commands = """AVAILABLE COMMANDS:
-    DISCONNECT,LEAVE,QUIT,EXIT - disconnect
-    RESET - reset server
-    KILL - closes server
-    OS - displays info on operating system (use -a for more details)
-    NAME - displays machine name
-    RAM - displays total,used and available memory
-    CPU - displays CPU percentage
-    LOGS [number] or [clear] - displays server logs
-    IP - Displays machine local IP
-    PING <destination> - ping a destination address
-    CLEAR - clears terminal
-    RENAME <name> - renames client
-    LINUX:<command> - Execute command on machine"""
-                client.send(commands)
-            elif cmd == 'ping':
-                if args:
-                    process = subprocess.Popen('ping -c 4 ' + cmd_split[1], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8', shell=True)
-                    output = process.stdout.read()
-                    if len(output) == 0:
-                        output = process.stderr.read()
-                else:
-                    output = 'Usage : ping <DESTINATION>'
-                client.send(output)
-            elif cmd[0:6] == 'linux:':
-                command = data.split(':', 1)[1]
-                if len(command) == 0:
-                    client.send('Usage : linux:<COMMAND>')
-                    return
-                process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8', shell=True)
-                output = process.stdout.read()
-                if len(output) == 0:
-                    output = process.stderr.read()
-                if len(output) == 0:
-                    output = 'success'
-                client.send(output)
-            elif cmd[0:4] == 'dos:' or cmd[0:6] == 'macos:':
-                client.send('This is a linux machine, try using "linux:" instead')
-            else:
-                client.send('Command not found. Type help for a list of available commands')
+            linux(client, cmd, cmd_split, data, args)
         else:
-            if cmd == 'help':
-                commands = """AVAILABLE COMMANDS:
-    DISCONNECT,LEAVE,QUIT,EXIT - disconnect
-    RESET - reset server
-    KILL - closes server
-    OS - displays info on operating system (use -a for more details)
-    NAME - displays machine name
-    RAM - displays total,used and available memory
-    CPU - displays CPU percentage
-    LOGS [number] or [clear] - displays server logs
-    IP - Displays machine local IP
-    CLEAR - clears terminal
-    RENAME <name> - renames client
-    EXEC:<command> - Execute command on this system"""
-                client.send(commands)
-            elif cmd == 'exec':
-                command = data.split(':', 1)[1]
-                if len(command) == 0:
-                    client.send('Usage : exec:<COMMAND>')
-                    return
-                process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8', shell=True)
-                output = process.stdout.read()
-                if len(output) == 0:
-                    output = process.stderr.read()
-                if len(output) == 0:
-                    output = 'success'
-                client.send(output)
-            elif cmd[0:4] == 'dos:' or cmd[0:6] == 'macos:' or cmd[0:6] == 'linux:':
-                client.send("try using 'exec:' instead")
-            else:
-                client.send('Command not found. Type help for a list of available commands')
+            other(client, cmd, cmd_split, data, args)
     sys.exit()
 
 

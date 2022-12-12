@@ -2,7 +2,7 @@ import threading
 import socket
 import sys
 from datetime import datetime
-from cmd import execute, cpu_percent, ram_percent
+from commands.cmd import execute, cpu_percent, ram_percent
 import time
 
 
