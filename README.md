@@ -40,10 +40,10 @@ Get the required packages:
 
 ## SETTING UP A SUPERSHELL SERVER
 
-To set up a server, you will need the following files in the same directory:
+To set up a server, you will need the following files/folders in the same directory:
 ```
 server.py
-cmd.py
+commands <DIR>
 ```
 
 Open a terminal on your machine, and run the **server.py** file with the following argument:
@@ -72,16 +72,10 @@ That's all!
 
 ## SETTING UP A SUPERSHELL CLIENT
 
-To run the client application, you will need the following files and directory in the same directory:
+To run the client application, you will need the following files/folders in the same directory:
 ```
 client.py
-main_window.py
-main_tab.py
-connection_list.py
-add_connection.py
-navbar.py
-server_tab.py
-assets
+assets <DIR>
 ```
 Open a terminal on your machine and run the **client.py** script with python:
 ```
