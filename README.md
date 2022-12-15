@@ -102,4 +102,6 @@ Please note:
 Your client has been successfully set up!
 
 ## SUPERSHELL CLIENT GUIDE
-Please view documents/user_guide.pdf
+Please view documents/user guide.pdf
+## FOR MORE TECHNICAL DETAILS
+Please view documents/technical document.pdf
