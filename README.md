@@ -101,5 +101,5 @@ Please note:
 
 Your client has been successfully set up!
 
-## HOW TO USE THE SUPERSHELL CLIENT APPLICATION
-...
+## SUPERSHELL CLIENT GUIDE
+Please view documents/user_guide.pdf
