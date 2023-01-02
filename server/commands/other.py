@@ -17,7 +17,7 @@ def other(client, cmd, cmd_split, data, args):
     RENAME <name> - renames client
     EXEC:<command> - Execute command on this system"""
         client.send(commands)
-    elif cmd == 'exec':
+    elif cmd[0:5] == 'exec:':
         command = data.split(':', 1)[1]
         if len(command) == 0:
             client.send('Usage : exec:<COMMAND>')
