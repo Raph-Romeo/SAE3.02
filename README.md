@@ -1,4 +1,10 @@
 # SAE3.02 Self-monitoring Application
+
+Made by **RAPHAEL ROMEO**, second year student in Networks and Telecoms.
+You can reach me at : pro.raphaelromeo1@gmail.com
+
+Feel free to use any of my code.
+
 I chose to name my application SUPERSHELL
 
 ## WHAT IS A SUPERSHELL SERVER?
